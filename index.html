@@ -53,7 +53,6 @@
                 <li class="nav-item"><a href="#code" class="nav-link"><i class="fa-solid fa-terminal"></i> Live Code</a></li>
                 <li class="nav-item"><a href="#sandbox" class="nav-link"><i class="fa-solid fa-calculator"></i> ML Sandbox</a></li>
                 <li class="nav-item"><a href="#credentials" class="nav-link"><i class="fa-solid fa-graduation-cap"></i> Achievements</a></li>
-                <li class="nav-item"><a href="#contact" class="nav-link btn-contact-nav"><i class="fa-solid fa-paper-plane"></i> Contact</a></li>
             </ul>
 
             <div class="nav-toggle" id="nav-toggle">
@@ -548,62 +547,102 @@
         <!-- INTERACTIVE MACHINE LEARNING SANDBOX (WOW Factor) -->
         <section id="sandbox" class="sandbox-section container">
             <div class="section-header">
-                <div class="section-badge"><i class="fa-solid fa-calculator"></i> ML Interactive</div>
-                <h2 class="section-title">Interactive Data Science Sandbox</h2>
-                <p class="section-description">A real client-side ML algorithm simulator. Click inside the coordinate space to add custom data points, choose your learning model, and watch the model train and fit boundaries instantly in pure JavaScript!</p>
+                <div class="section-badge"><i class="fa-solid fa-gamepad"></i> ML Playground</div>
+                <h2 class="section-title">Interactive ML Sandbox & Mini-Games</h2>
+                <p class="section-description">A real-time, zero-dependency graphical algorithm engine. Adjust parameters, step K-Means centroids, configure raw neuron decision fields, and master data models in a fun, gamified playground.</p>
             </div>
 
             <div class="sandbox-grid glass-card">
                 <!-- Sandbox Canvas Area -->
                 <div class="sandbox-canvas-panel">
                     <canvas id="sandbox-canvas" width="550" height="400"></canvas>
-                    <div class="sandbox-instruction-bar">
-                        <i class="fa-solid fa-circle-info"></i> Click inside the grid to add data coordinates. Toggle classes to see boundaries.
+                    <div class="sandbox-instruction-bar" id="sandbox-instructions">
+                        <i class="fa-solid fa-circle-info"></i> Objective: Adjust the Slope (w) and Intercept (b) sliders to tilt the regression line and minimize Mean Squared Error (MSE) under 500!
                     </div>
                 </div>
 
                 <!-- Sandbox Control Panel -->
                 <div class="sandbox-control-panel">
-                    <h3 class="panel-subtitle"><i class="fa-solid fa-sliders"></i> Model Hyperparameters</h3>
-                    
-                    <div class="control-group">
-                        <label>ML Paradigm Selection</label>
-                        <div class="sandbox-toggles" id="paradigm-select">
-                            <button class="btn-toggle active" data-paradigm="regression"><i class="fa-solid fa-chart-line"></i> Linear Regression</button>
-                            <button class="btn-toggle" data-paradigm="classification"><i class="fa-solid fa-chart-area"></i> KNN Classifier (2-Class)</button>
+                    <!-- Algorithm Selector Tabs -->
+                    <div class="sandbox-tabs">
+                        <button class="sandbox-tab active" data-algo="regression"><i class="fa-solid fa-chart-line"></i> Linear Regression</button>
+                        <button class="sandbox-tab" data-algo="kmeans"><i class="fa-solid fa-circle-nodes"></i> K-Means Clustering</button>
+                        <button class="sandbox-tab" data-algo="neuron"><i class="fa-solid fa-brain"></i> Neural Decision Neuron</button>
+                    </div>
+
+                    <!-- Mathematical Formula display block -->
+                    <div class="formula-card">
+                        <div class="formula-title"><i class="fa-solid fa-square-root-variable"></i> Governing Equations</div>
+                        <div class="formula-latex" id="algo-formula">
+                            ŷ = w•x + b<br>
+                            MSE = (1/n)•Σ(y_i - ŷ_i)²
                         </div>
                     </div>
 
-                    <div class="control-group" id="class-color-selector" style="display: none;">
-                        <label>Placement Class Label</label>
-                        <div class="sandbox-toggles" id="class-select">
-                            <button class="btn-toggle btn-red active" data-class="0"><span class="color-dot red-dot"></span> Class A (Red)</button>
-                            <button class="btn-toggle btn-cyan" data-class="1"><span class="color-dot blue-dot"></span> Class B (Blue)</button>
-                        </div>
-                    </div>
-
-                    <div class="control-group" id="knn-k-group" style="display: none;">
-                        <label for="knn-k">K-Neighbors Hyperparameter: <span class="badge-num" id="knn-k-val">3</span></label>
-                        <input type="range" id="knn-k" min="1" max="15" value="3" class="sandbox-slider">
-                    </div>
-
-                    <div class="control-group" id="regression-fit-group">
-                        <label>Statistical Diagnostics</label>
-                        <div class="sandbox-metrics">
-                            <div class="metric-row">
-                                <span class="metric-name">R² Score (Goodness of Fit)</span>
-                                <span class="metric-val" id="r2-score">0.00</span>
+                    <!-- Dynamically shown parameter sliders -->
+                    <div class="algorithm-parameters-block">
+                        <!-- Regression Controls -->
+                        <div class="control-group active-control" id="control-regression">
+                            <div class="label-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                                <label for="reg-w">Slope Coefficient (w)</label>
+                                <span class="badge-num" id="reg-w-val">1.0</span>
                             </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Fitted Equation</span>
-                                <span class="metric-val" id="regression-eq">y = 0.00x + 0.00</span>
+                            <input type="range" id="reg-w" min="-4" max="4" step="0.1" value="1.0" class="sandbox-slider" style="margin-bottom: 1.25rem;">
+                            
+                            <div class="label-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                                <label for="reg-b">Y-Intercept Bias (b)</label>
+                                <span class="badge-num" id="reg-b-val">200</span>
                             </div>
+                            <input type="range" id="reg-b" min="50" max="350" step="5" value="200" class="sandbox-slider">
+                        </div>
+
+                        <!-- K-Means Controls -->
+                        <div class="control-group" id="control-kmeans" style="display: none;">
+                            <div class="label-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                                <label for="kmeans-k">Clusters Count (Centroids K)</label>
+                                <span class="badge-num" id="kmeans-k-val">3</span>
+                            </div>
+                            <input type="range" id="kmeans-k" min="2" max="5" step="1" value="3" class="sandbox-slider">
+                        </div>
+
+                        <!-- Neuron Controls -->
+                        <div class="control-group" id="control-neuron" style="display: none;">
+                            <div class="label-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                                <label for="neuron-w1">Input Weight w₁ (X-Axis)</label>
+                                <span class="badge-num" id="neuron-w1-val">0.5</span>
+                            </div>
+                            <input type="range" id="neuron-w1" min="-2.5" max="2.5" step="0.1" value="0.5" class="sandbox-slider" style="margin-bottom: 1.25rem;">
+                            
+                            <div class="label-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                                <label for="neuron-w2">Input Weight w₂ (Y-Axis)</label>
+                                <span class="badge-num" id="neuron-w2-val">0.5</span>
+                            </div>
+                            <input type="range" id="neuron-w2" min="-2.5" max="2.5" step="0.1" value="0.5" class="sandbox-slider" style="margin-bottom: 1.25rem;">
+                            
+                            <div class="label-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                                <label for="neuron-bias">Neuron Bias (b)</label>
+                                <span class="badge-num" id="neuron-bias-val">0.0</span>
+                            </div>
+                            <input type="range" id="neuron-bias" min="-2.5" max="2.5" step="0.1" value="0.0" class="sandbox-slider">
                         </div>
                     </div>
 
+                    <!-- Performance and Diagnostic Metrics -->
+                    <div class="sandbox-metrics" style="margin-top: 1rem; margin-bottom: 1.25rem;">
+                        <div class="metric-row" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                            <span class="metric-name" id="metric-label-1">Mean Squared Error (MSE)</span>
+                            <span class="metric-val" id="metric-val-1">1,245.5</span>
+                        </div>
+                        <div class="metric-row" id="metric-row-2" style="display:flex; justify-content:space-between;">
+                            <span class="metric-name" id="metric-label-2">Best Target Score (Under 500)</span>
+                            <span class="metric-val val-green" id="metric-val-2">Incomplete</span>
+                        </div>
+                    </div>
+
+                    <!-- Sandbox Game Action Deck -->
                     <div class="sandbox-actions-deck">
-                        <button class="btn btn-primary glow-cyan btn-full-width" id="btn-fit-model"><i class="fa-solid fa-play"></i> Train & Predict Model</button>
-                        <button class="btn btn-secondary btn-full-width" id="btn-clear-sandbox"><i class="fa-solid fa-arrow-rotate-right"></i> Reset Sandbox Grid</button>
+                        <button class="btn btn-primary glow-cyan btn-full-width" id="btn-algo-action" style="display: none;"><i class="fa-solid fa-play"></i> Step Clustering Iteration</button>
+                        <button class="btn btn-secondary btn-full-width" id="btn-algo-reset"><i class="fa-solid fa-arrow-rotate-right"></i> Reset Simulation Grid</button>
                     </div>
                 </div>
             </div>
@@ -658,64 +697,6 @@
             </div>
         </section>
 
-        <!-- HIGH-CONVERSION RECRUITER CONTACT DECK -->
-        <section id="contact" class="contact-section container">
-            <div class="section-header">
-                <div class="section-badge"><i class="fa-solid fa-address-book"></i> Connect</div>
-                <h2 class="section-title">Direct Communication Channels</h2>
-                <p class="section-description">Available for immediate hiring opportunities, data science collaborations, and innovative machine learning roles.</p>
-            </div>
-
-            <div class="contact-layout-centered">
-                <div class="contact-dossier-card glass-card">
-                    <div class="dossier-header">
-                        <div class="dossier-glow-avatar">
-                            <img src="me.jpeg" alt="Aastha Ojha" class="dossier-avatar">
-                        </div>
-                        <div class="dossier-titles">
-                            <h3>Aastha Ojha</h3>
-                            <p>Data Scientist & AI/ML Engineer</p>
-                            <span class="dossier-location"><i class="fa-solid fa-location-dot"></i> Gorakhpur, UP, India (Open to Relocation)</span>
-                        </div>
-                    </div>
-                    
-                    <div class="dossier-details-grid">
-                        <a href="tel:+917080258042" class="dossier-item" title="Call Direct">
-                            <div class="d-icon"><i class="fa-solid fa-phone"></i></div>
-                            <div class="d-text">
-                                <span class="d-label">Phone Channel</span>
-                                <span class="d-value">+91 70802 58042</span>
-                            </div>
-                        </a>
-                        <a href="mailto:aastha.ojha2109@gmail.com" class="dossier-item" title="Send Email">
-                            <div class="d-icon"><i class="fa-solid fa-envelope"></i></div>
-                            <div class="d-text">
-                                <span class="d-label">Email Interface</span>
-                                <span class="d-value">aastha.ojha2109@gmail.com</span>
-                            </div>
-                        </a>
-                        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="dossier-item" title="LinkedIn Profile">
-                            <div class="d-icon"><i class="fa-brands fa-linkedin-in"></i></div>
-                            <div class="d-text">
-                                <span class="d-label">LinkedIn Hub</span>
-                                <span class="d-value">linkedin.com/in/aastha-ojha</span>
-                            </div>
-                        </a>
-                        <a href="https://github.com/aasthaojha" target="_blank" rel="noopener noreferrer" class="dossier-item" title="GitHub Source">
-                            <div class="d-icon"><i class="fa-brands fa-github"></i></div>
-                            <div class="d-text">
-                                <span class="d-label">GitHub Repository</span>
-                                <span class="d-value">github.com/aasthaojha</span>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="dossier-actions">
-                        <a href="Aastha_Ojha_Resume_Data_Science.pdf" download="Aastha_Ojha_Resume_Data_Science.pdf" class="btn btn-primary glow-cyan btn-full-width"><i class="fa-solid fa-file-arrow-down"></i> Get Executive Resume & Dossier (PDF)</a>
-                    </div>
-                </div>
-            </div>
-        </section>
 
     </main>
 
@@ -728,6 +709,12 @@
             </div>
         </div>
     </footer>
+
+    <!-- Floating Resume Button -->
+    <a href="Aastha_Ojha_Resume_Data_Science.pdf" download="Aastha_Ojha_Resume_Data_Science.pdf" class="floating-resume-btn" title="Download Resume">
+        <div class="floating-icon"><i class="fa-solid fa-download"></i></div>
+        <span class="floating-text">Resume</span>
+    </a>
 
     <!-- Custom Script File -->
     <script src="script.js"></script>

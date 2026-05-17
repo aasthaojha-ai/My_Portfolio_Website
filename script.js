@@ -506,50 +506,109 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 10. INTERACTIVE DATA SCIENCE & ML SANDBOX ENGINE ---
+    // --- 10. INTERACTIVE MACHINE LEARNING SANDBOX PLAYGROUND ---
     const canvasSandbox = document.getElementById('sandbox-canvas');
     if (canvasSandbox) {
         const ctxS = canvasSandbox.getContext('2d');
-        let points = []; // Array of {x, y, label} where label: 0 (Red) or 1 (Blue)
-        let paradigm = 'regression'; // 'regression' or 'classification'
-        let activeClass = 0; // 0: Red, 1: Blue
-        
-        const paradigmToggles = document.querySelectorAll('#paradigm-select .btn-toggle');
-        const classToggles = document.querySelectorAll('#class-select .btn-toggle');
-        const classColorSelector = document.getElementById('class-color-selector');
-        const knnKGroup = document.getElementById('knn-k-group');
-        const regressionFitGroup = document.getElementById('regression-fit-group');
-        const knnKInput = document.getElementById('knn-k');
-        const knnKValSpan = document.getElementById('knn-k-val');
-        const r2ScoreSpan = document.getElementById('r2-score');
-        const regressionEqSpan = document.getElementById('regression-eq');
-        const btnFitModel = document.getElementById('btn-fit-model');
-        const btnClearSandbox = document.getElementById('btn-clear-sandbox');
+        let currentAlgo = 'regression';
 
-        // Draw coordinate grid helper
+        // 1. Data Points definition (Static distributions for visual stability and clean lessons)
+        const regressionPoints = [
+            { x: 100, y: 310 },
+            { x: 160, y: 260 },
+            { x: 220, y: 230 },
+            { x: 280, y: 190 },
+            { x: 340, y: 160 },
+            { x: 400, y: 110 },
+            { x: 460, y: 70 }
+        ];
+
+        const kmeansPoints = [
+            // Cluster 1 (Left-Top)
+            { x: 110, y: 120, label: -1 }, { x: 130, y: 100, label: -1 }, { x: 140, y: 140, label: -1 }, { x: 90, y: 150, label: -1 }, { x: 120, y: 160, label: -1 },
+            // Cluster 2 (Right-Top)
+            { x: 420, y: 130, label: -1 }, { x: 440, y: 110, label: -1 }, { x: 380, y: 120, label: -1 }, { x: 400, y: 160, label: -1 }, { x: 460, y: 150, label: -1 },
+            // Cluster 3 (Bottom-Center)
+            { x: 250, y: 320, label: -1 }, { x: 280, y: 300, label: -1 }, { x: 220, y: 310, label: -1 }, { x: 270, y: 340, label: -1 }, { x: 290, y: 280, label: -1 }, { x: 230, y: 270, label: -1 }
+        ];
+
+        const neuronPoints = [
+            // Class 0 (Red - Top-Left)
+            { x: 100, y: 100, class: 0 }, { x: 140, y: 120, class: 0 }, { x: 120, y: 160, class: 0 }, { x: 180, y: 110, class: 0 }, { x: 90, y: 170, class: 0 }, { x: 160, y: 180, class: 0 }, { x: 210, y: 130, class: 0 },
+            // Class 1 (Blue - Bottom-Right)
+            { x: 380, y: 280, class: 1 }, { x: 420, y: 300, class: 1 }, { x: 350, y: 330, class: 1 }, { x: 440, y: 250, class: 1 }, { x: 390, y: 350, class: 1 }, { x: 320, y: 310, class: 1 }, { x: 430, y: 320, class: 1 }
+        ];
+
+        // Centroids list for K-Means
+        let centroids = [];
+        const centroidColors = ['#ef4444', '#06b6d4', '#10b981', '#f59e0b', '#ec4899'];
+
+        // DOM elements cache
+        const algoTabs = document.querySelectorAll('.sandbox-tab');
+        const regWSlider = document.getElementById('reg-w');
+        const regBSlider = document.getElementById('reg-b');
+        const regWVal = document.getElementById('reg-w-val');
+        const regBVal = document.getElementById('reg-b-val');
+
+        const kmeansKSlider = document.getElementById('kmeans-k');
+        const kmeansKVal = document.getElementById('kmeans-k-val');
+
+        const neuronW1Slider = document.getElementById('neuron-w1');
+        const neuronW2Slider = document.getElementById('neuron-w2');
+        const neuronBiasSlider = document.getElementById('neuron-bias');
+        const neuronW1Val = document.getElementById('neuron-w1-val');
+        const neuronW2Val = document.getElementById('neuron-w2-val');
+        const neuronBiasVal = document.getElementById('neuron-bias-val');
+
+        const controlReg = document.getElementById('control-regression');
+        const controlKmeans = document.getElementById('control-kmeans');
+        const controlNeuron = document.getElementById('control-neuron');
+
+        const formulaText = document.getElementById('algo-formula');
+        const instructionsText = document.getElementById('sandbox-instructions');
+
+        const metricLabel1 = document.getElementById('metric-label-1');
+        const metricVal1 = document.getElementById('metric-val-1');
+        const metricLabel2 = document.getElementById('metric-label-2');
+        const metricVal2 = document.getElementById('metric-val-2');
+
+        const btnAction = document.getElementById('btn-algo-action');
+        const btnReset = document.getElementById('btn-algo-reset');
+
+        // Governing formulas map
+        const formulas = {
+            regression: `ŷ = w•x + b<br>MSE = (1/n)•Σ(y_i - ŷ_i)²`,
+            kmeans: `J = Σ_{j=1}^K Σ_{i ∈ S_j} ||x_i - μ_j||²<br>(Minimize Inertia)`,
+            neuron: `a = σ(w_1•x_1 + w_2•x_2 + b)<br>σ(z) = 1 / (1 + e^{-z})`
+        };
+
+        // Instructions map
+        const instructions = {
+            regression: `<i class="fa-solid fa-circle-info"></i> Objective: Adjust the Slope (w) and Intercept (b) sliders to tilt the regression line and minimize Mean Squared Error (MSE) under 500!`,
+            kmeans: `<i class="fa-solid fa-circle-info"></i> Objective: Change K value, then click "Step Clustering Iteration" repeatedly to watch centroids converge step-by-step!`,
+            neuron: `<i class="fa-solid fa-circle-info"></i> Objective: Drag w1, w2, and bias sliders to orient the neuron decision divider and perfectly separate Red from Blue!`
+        };
+
+        // Grid renderer helper
         function drawGrid() {
             ctxS.clearRect(0, 0, canvasSandbox.width, canvasSandbox.height);
-            
-            // Draw background grid lines
             ctxS.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctxS.lineWidth = 1;
-            
-            const gridSpacing = 40;
-            for (let x = 0; x < canvasSandbox.width; x += gridSpacing) {
+            const step = 40;
+            for (let x = 0; x < canvasSandbox.width; x += step) {
                 ctxS.beginPath();
                 ctxS.moveTo(x, 0);
                 ctxS.lineTo(x, canvasSandbox.height);
                 ctxS.stroke();
             }
-            for (let y = 0; y < canvasSandbox.height; y += gridSpacing) {
+            for (let y = 0; y < canvasSandbox.height; y += step) {
                 ctxS.beginPath();
                 ctxS.moveTo(0, y);
                 ctxS.lineTo(canvasSandbox.width, y);
                 ctxS.stroke();
             }
-
-            // Draw center axes (light purple glow)
-            ctxS.strokeStyle = 'rgba(127, 0, 255, 0.15)';
+            // Draw axis lines
+            ctxS.strokeStyle = 'rgba(255, 255, 255, 0.08)';
             ctxS.lineWidth = 2;
             ctxS.beginPath();
             ctxS.moveTo(canvasSandbox.width / 2, 0);
@@ -559,209 +618,375 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxS.stroke();
         }
 
-        // Draw points on canvas
-        function drawPoints() {
-            points.forEach(pt => {
-                ctxS.beginPath();
-                ctxS.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
-                if (pt.label === 0) {
-                    ctxS.fillStyle = '#ef4444'; // Class A: Red
-                    ctxS.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-                } else {
-                    ctxS.fillStyle = '#06b6d4'; // Class B: Blue
-                    ctxS.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-                }
-                ctxS.lineWidth = 4;
-                ctxS.fill();
-                ctxS.stroke();
-            });
+        // Initialize K-Means centroids
+        function initKMeansCentroids() {
+            const K = parseInt(kmeansKSlider.value);
+            centroids = [];
+            kmeansPoints.forEach(p => p.label = -1);
+            for (let i = 0; i < K; i++) {
+                centroids.push({
+                    x: Math.random() * (canvasSandbox.width - 100) + 50,
+                    y: Math.random() * (canvasSandbox.height - 100) + 50,
+                    color: centroidColors[i % centroidColors.length]
+                });
+            }
         }
 
-        // Standard initialization
-        drawGrid();
-
-        // Canvas Click Handler: Add custom coordinates
-        canvasSandbox.addEventListener('mousedown', (e) => {
-            const rect = canvasSandbox.getBoundingClientRect();
-            // Calculate scale in case of responsive layout shrinking
-            const scaleX = canvasSandbox.width / rect.width;
-            const scaleY = canvasSandbox.height / rect.height;
-            const x = (e.clientX - rect.left) * scaleX;
-            const y = (e.clientY - rect.top) * scaleY;
-
-            // In regression paradigm, label is always 0. In classification, use active class toggle
-            const label = (paradigm === 'regression') ? 0 : activeClass;
-            points.push({ x, y, label });
-            
-            // Re-render canvas viewport
-            trainAndPredict(false); // Quick reactive draw
-        });
-
-        // Paradigm Toggle Handlers
-        paradigmToggles.forEach(btn => {
-            btn.addEventListener('click', () => {
-                paradigmToggles.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                paradigm = btn.getAttribute('data-paradigm');
-
-                if (paradigm === 'regression') {
-                    classColorSelector.style.display = 'none';
-                    knnKGroup.style.display = 'none';
-                    regressionFitGroup.style.display = 'block';
-                    // Reset labels to 0
-                    points.forEach(pt => pt.label = 0);
-                } else {
-                    classColorSelector.style.display = 'block';
-                    knnKGroup.style.display = 'block';
-                    regressionFitGroup.style.display = 'none';
-                }
-                trainAndPredict(true);
-            });
-        });
-
-        // Class Selection Toggle Handlers
-        classToggles.forEach(btn => {
-            btn.addEventListener('click', () => {
-                classToggles.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                activeClass = parseInt(btn.getAttribute('data-class'));
-            });
-        });
-
-        // Slider value dynamic update
-        knnKInput.addEventListener('input', () => {
-            knnKValSpan.textContent = knnKInput.value;
-            if (paradigm === 'classification') {
-                trainAndPredict(true);
-            }
-        });
-
-        // Fit & Train Machine Learning Model
-        function trainAndPredict(fullRedraw = true) {
+        // Render everything based on active algorithm
+        function render() {
             drawGrid();
 
-            if (points.length === 0) return;
+            if (currentAlgo === 'regression') {
+                const w = parseFloat(regWSlider.value);
+                const b = parseFloat(regBSlider.value);
 
-            if (paradigm === 'regression') {
-                // LINEAR REGRESSION LEAST SQUARES FITTING
-                if (points.length >= 2) {
-                    let sumX = 0, sumY = 0;
-                    const n = points.length;
+                // yHat = b - w * (x - 275)
+                // Draw residual line bars (glowing pink dashed vectors)
+                ctxS.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+                ctxS.setLineDash([4, 4]);
+                ctxS.lineWidth = 2;
+                let sumSqErr = 0;
 
-                    points.forEach(pt => {
-                        sumX += pt.x;
-                        sumY += pt.y;
-                    });
+                regressionPoints.forEach(pt => {
+                    const yHat = b - w * (pt.x - 275);
+                    sumSqErr += Math.pow(pt.y - yHat, 2);
 
-                    const meanX = sumX / n;
-                    const meanY = sumY / n;
-
-                    // Compute slope (m) and intercept (c)
-                    let num = 0;
-                    let den = 0;
-                    points.forEach(pt => {
-                        num += (pt.x - meanX) * (pt.y - meanY);
-                        den += (pt.x - meanX) * (pt.x - meanX);
-                    });
-
-                    let slope = (den === 0) ? 0 : num / den;
-                    let intercept = meanY - slope * meanX;
-
-                    // Calculate R² goodness of fit
-                    let totalSS = 0;
-                    let residualSS = 0;
-                    points.forEach(pt => {
-                        const predictedY = slope * pt.x + intercept;
-                        totalSS += Math.pow(pt.y - meanY, 2);
-                        residualSS += Math.pow(pt.y - predictedY, 2);
-                    });
-
-                    let r2 = (totalSS === 0) ? 1.0 : 1 - (residualSS / totalSS);
-                    
-                    // Convert pixels to pseudo math coordinates for clean metrics representation
-                    const pseudoSlope = (-slope).toFixed(2); // Invert y-axis to match typical math grid
-                    const pseudoIntercept = (canvasSandbox.height - intercept).toFixed(0);
-
-                    r2ScoreSpan.textContent = r2.toFixed(3);
-                    regressionEqSpan.textContent = `y = ${pseudoSlope}x + ${pseudoIntercept}`;
-
-                    // Draw the fitted line
-                    ctxS.strokeStyle = 'rgba(0, 242, 254, 0.85)';
-                    ctxS.lineWidth = 3;
-                    ctxS.shadowColor = 'rgba(0, 242, 254, 0.4)';
-                    ctxS.shadowBlur = 10;
-                    
                     ctxS.beginPath();
-                    const x0 = 0;
-                    const y0 = intercept;
-                    const x1 = canvasSandbox.width;
-                    const y1 = slope * x1 + intercept;
-                    ctxS.moveTo(x0, y0);
-                    ctxS.lineTo(x1, y1);
+                    ctxS.moveTo(pt.x, pt.y);
+                    ctxS.lineTo(pt.x, yHat);
                     ctxS.stroke();
-                    
-                    // Reset shadow glow
-                    ctxS.shadowBlur = 0;
-                } else {
-                    r2ScoreSpan.textContent = '0.000';
-                    regressionEqSpan.textContent = 'Need >= 2 coordinates';
-                }
-            } else if (paradigm === 'classification' && points.length > 0) {
-                // K-NEAREST NEIGHBORS (KNN) DECISION BOUNDARY CLASSIFIER
-                const k = parseInt(knnKInput.value);
-                const step = 8; // Render boundary map in step steps to preserve client-side speed
+                });
 
-                // Loop through canvas pixels to draw background decision shaded areas
+                ctxS.setLineDash([]); // Reset
+                const mse = (sumSqErr / regressionPoints.length).toFixed(1);
+
+                // Draw fitted line
+                ctxS.strokeStyle = 'var(--accent-cyan)';
+                ctxS.lineWidth = 4;
+                ctxS.shadowColor = 'rgba(0, 242, 254, 0.4)';
+                ctxS.shadowBlur = 10;
+                ctxS.beginPath();
+                ctxS.moveTo(0, b - w * (0 - 275));
+                ctxS.lineTo(canvasSandbox.width, b - w * (canvasSandbox.width - 275));
+                ctxS.stroke();
+                ctxS.shadowBlur = 0; // Reset
+
+                // Draw Scatter points
+                regressionPoints.forEach(pt => {
+                    ctxS.beginPath();
+                    ctxS.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+                    ctxS.fillStyle = '#fff';
+                    ctxS.strokeStyle = 'var(--accent-cyan)';
+                    ctxS.lineWidth = 3;
+                    ctxS.fill();
+                    ctxS.stroke();
+                });
+
+                // Update metrics
+                metricLabel1.textContent = 'Mean Squared Error (MSE)';
+                metricVal1.textContent = mse;
+                metricLabel2.textContent = 'Game Target (Under 500)';
+                if (mse < 500) {
+                    metricVal2.textContent = '🎉 Fit Achieved!';
+                    metricVal2.className = 'metric-val val-green';
+                } else {
+                    metricVal2.textContent = 'Fit Sliders';
+                    metricVal2.className = 'metric-val';
+                }
+            }
+            else if (currentAlgo === 'kmeans') {
+                // Draw centroid connection attraction bonds
+                ctxS.lineWidth = 1.5;
+                kmeansPoints.forEach(pt => {
+                    if (pt.label !== -1) {
+                        const cent = centroids[pt.label];
+                        ctxS.strokeStyle = cent.color + '26'; // faint transparency
+                        ctxS.beginPath();
+                        ctxS.moveTo(pt.x, pt.y);
+                        ctxS.lineTo(cent.x, cent.y);
+                        ctxS.stroke();
+                    }
+                });
+
+                // Draw data points colored by assigned cluster centroid
+                kmeansPoints.forEach(pt => {
+                    ctxS.beginPath();
+                    ctxS.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+                    if (pt.label === -1) {
+                        ctxS.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctxS.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    } else {
+                        ctxS.fillStyle = centroids[pt.label].color;
+                        ctxS.strokeStyle = '#fff';
+                    }
+                    ctxS.lineWidth = 2;
+                    ctxS.fill();
+                    ctxS.stroke();
+                });
+
+                // Draw centroids as glowing crosshairs
+                centroids.forEach((cent, idx) => {
+                    ctxS.shadowColor = cent.color;
+                    ctxS.shadowBlur = 12;
+                    ctxS.fillStyle = cent.color;
+                    ctxS.strokeStyle = '#fff';
+                    ctxS.lineWidth = 3;
+
+                    // Centroid representation
+                    ctxS.beginPath();
+                    ctxS.arc(cent.x, cent.y, 11, 0, Math.PI * 2);
+                    ctxS.fill();
+                    ctxS.stroke();
+
+                    // Plus sign inside
+                    ctxS.strokeStyle = '#000';
+                    ctxS.lineWidth = 2;
+                    ctxS.beginPath();
+                    ctxS.moveTo(cent.x - 6, cent.y);
+                    ctxS.lineTo(cent.x + 6, cent.y);
+                    ctxS.moveTo(cent.x, cent.y - 6);
+                    ctxS.lineTo(cent.x, cent.y + 6);
+                    ctxS.stroke();
+
+                    ctxS.shadowBlur = 0; // Reset
+                });
+
+                // Compute Clustering Inertia (Within-Cluster Sum of Squares)
+                let inertia = 0;
+                let assignedCount = 0;
+                kmeansPoints.forEach(pt => {
+                    if (pt.label !== -1) {
+                        const cent = centroids[pt.label];
+                        inertia += Math.pow(pt.x - cent.x, 2) + Math.pow(pt.y - cent.y, 2);
+                        assignedCount++;
+                    }
+                });
+
+                metricLabel1.textContent = 'Clustering Inertia (WCSS)';
+                metricVal1.textContent = assignedCount === 0 ? 'Not Initialized' : Math.round(inertia / 100);
+                metricLabel2.textContent = 'Convergence status';
+                if (assignedCount === kmeansPoints.length) {
+                    metricVal2.textContent = 'Converged';
+                    metricVal2.className = 'metric-val val-green';
+                } else {
+                    metricVal2.textContent = 'Click "Step"';
+                    metricVal2.className = 'metric-val';
+                }
+            }
+            else if (currentAlgo === 'neuron') {
+                const w1 = parseFloat(neuronW1Slider.value);
+                const w2 = parseFloat(neuronW2Slider.value);
+                const b = parseFloat(neuronBiasSlider.value);
+
+                // Draw 2D Shaded decision backdrop grid
+                const step = 8;
                 for (let px = 0; px < canvasSandbox.width; px += step) {
                     for (let py = 0; py < canvasSandbox.height; py += step) {
-                        
-                        // Calculate distance to all placed coordinates
-                        const distances = [];
-                        points.forEach(pt => {
-                            const d = Math.pow(px - pt.x, 2) + Math.pow(py - pt.y, 2); // Squared distance
-                            distances.push({ d, label: pt.label });
-                        });
+                        // Map pixels to standard feature space coordinates centered at 0
+                        const xNorm = (px - 275) / 100;
+                        const yNorm = (200 - py) / 100;
 
-                        // Sort by distance ascending
-                        distances.sort((a, b) => a.d - b.d);
+                        const z = w1 * xNorm + w2 * yNorm + b;
+                        const a = 1 / (1 + Math.exp(-z)); // Sigmoid activation
 
-                        // Take first K neighbors
-                        const neighbors = distances.slice(0, Math.min(k, distances.length));
-                        let class0Votes = 0;
-                        let class1Votes = 0;
-                        
-                        neighbors.forEach(n => {
-                            if (n.label === 0) class0Votes++;
-                            else class1Votes++;
-                        });
-
-                        // Draw shaded background pixel block based on class votes
-                        if (class0Votes > class1Votes) {
-                            ctxS.fillStyle = 'rgba(239, 68, 68, 0.07)'; // Light red
-                        } else if (class1Votes > class0Votes) {
-                            ctxS.fillStyle = 'rgba(6, 182, 212, 0.07)'; // Light blue
+                        if (a > 0.5) {
+                            ctxS.fillStyle = `rgba(6, 182, 212, ${0.08 * a})`;
                         } else {
-                            ctxS.fillStyle = 'rgba(127, 0, 255, 0.03)'; // Neutral tie
+                            ctxS.fillStyle = `rgba(239, 68, 68, ${0.08 * (1 - a)})`;
                         }
                         ctxS.fillRect(px, py, step, step);
                     }
                 }
-            }
 
-            drawPoints();
+                // Draw linear partition boundary line (w1*x + w2*y + b = 0)
+                ctxS.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctxS.lineWidth = 2.5;
+                ctxS.beginPath();
+                // Find two boundary coordinates
+                if (Math.abs(w2) > 0.01) {
+                    const x0 = 0, y0 = 200 - 100 * (-(w1 * (-275 / 100) + b) / w2);
+                    const x1 = canvasSandbox.width, y1 = 200 - 100 * (-(w1 * ((canvasSandbox.width - 275) / 100) + b) / w2);
+                    ctxS.moveTo(x0, y0);
+                    ctxS.lineTo(x1, y1);
+                } else if (Math.abs(w1) > 0.01) {
+                    const x = 275 + 100 * (-b / w1);
+                    ctxS.moveTo(x, 0);
+                    ctxS.lineTo(x, canvasSandbox.height);
+                }
+                ctxS.stroke();
+
+                // Draw Class Points
+                let correctCount = 0;
+                neuronPoints.forEach(pt => {
+                    ctxS.beginPath();
+                    ctxS.arc(pt.x, pt.y, 7.5, 0, Math.PI * 2);
+
+                    const xNorm = (pt.x - 275) / 100;
+                    const yNorm = (200 - pt.y) / 100;
+                    const z = w1 * xNorm + w2 * yNorm + b;
+                    const pred = z >= 0 ? 1 : 0;
+
+                    if (pt.class === 0) {
+                        ctxS.fillStyle = '#ef4444'; // Red
+                        ctxS.strokeStyle = pred === pt.class ? '#fff' : 'rgba(239, 68, 68, 0.4)';
+                    } else {
+                        ctxS.fillStyle = '#06b6d4'; // Blue
+                        ctxS.strokeStyle = pred === pt.class ? '#fff' : 'rgba(6, 182, 212, 0.4)';
+                    }
+
+                    if (pred === pt.class) correctCount++;
+
+                    ctxS.lineWidth = 3;
+                    ctxS.fill();
+                    ctxS.stroke();
+                });
+
+                const accuracy = Math.round((correctCount / neuronPoints.length) * 100);
+
+                metricLabel1.textContent = 'Classification Accuracy';
+                metricVal1.textContent = accuracy + '%';
+                metricLabel2.textContent = 'Objective Target (100%)';
+                if (accuracy === 100) {
+                    metricVal2.textContent = '🎉 Separation Complete!';
+                    metricVal2.className = 'metric-val val-green';
+                } else {
+                    metricVal2.textContent = 'Incomplete';
+                    metricVal2.className = 'metric-val';
+                }
+            }
         }
 
-        // Fit Model Button Handler
-        btnFitModel.addEventListener('click', () => {
-            trainAndPredict(true);
+        // Centroid convergence assignment and updates step function
+        function stepKMeans() {
+            const K = centroids.length;
+
+            // 1. Assignment Step
+            let changed = false;
+            kmeansPoints.forEach(pt => {
+                let minDist = Infinity;
+                let bestIdx = -1;
+                centroids.forEach((cent, idx) => {
+                    const d = Math.pow(pt.x - cent.x, 2) + Math.pow(pt.y - cent.y, 2);
+                    if (d < minDist) {
+                        minDist = d;
+                        bestIdx = idx;
+                    }
+                });
+                if (pt.label !== bestIdx) {
+                    pt.label = bestIdx;
+                    changed = true;
+                }
+            });
+
+            // 2. Update Centroid Means step
+            for (let cIdx = 0; cIdx < K; cIdx++) {
+                let sumX = 0, sumY = 0, count = 0;
+                kmeansPoints.forEach(pt => {
+                    if (pt.label === cIdx) {
+                        sumX += pt.x;
+                        sumY += pt.y;
+                        count++;
+                    }
+                });
+                if (count > 0) {
+                    const targetX = sumX / count;
+                    const targetY = sumY / count;
+
+                    // Glide centroids slightly towards target (or snap directly)
+                    centroids[cIdx].x = targetX;
+                    centroids[cIdx].y = targetY;
+                }
+            }
+            render();
+        }
+
+        // Tab Switching Click Event Listeners
+        algoTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                algoTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentAlgo = tab.getAttribute('data-algo');
+
+                // Hide all slider parameters blocks, show matching active block
+                controlReg.style.display = 'none';
+                controlKmeans.style.display = 'none';
+                controlNeuron.style.display = 'none';
+                btnAction.style.display = 'none';
+
+                if (currentAlgo === 'regression') {
+                    controlReg.style.display = 'block';
+                } else if (currentAlgo === 'kmeans') {
+                    controlKmeans.style.display = 'block';
+                    btnAction.style.display = 'block';
+                    initKMeansCentroids();
+                } else if (currentAlgo === 'neuron') {
+                    controlNeuron.style.display = 'block';
+                }
+
+                formulaText.innerHTML = formulas[currentAlgo];
+                instructionsText.innerHTML = instructions[currentAlgo];
+                render();
+            });
         });
 
-        // Reset Sandbox Button Handler
-        btnClearSandbox.addEventListener('click', () => {
-            points = [];
-            r2ScoreSpan.textContent = '0.000';
-            regressionEqSpan.textContent = 'y = 0.00x + 0.00';
-            drawGrid();
+        // Sliders Listeners
+        regWSlider.addEventListener('input', () => {
+            regWVal.textContent = regWSlider.value;
+            render();
         });
+        regBSlider.addEventListener('input', () => {
+            regBVal.textContent = regBSlider.value;
+            render();
+        });
+
+        kmeansKSlider.addEventListener('input', () => {
+            kmeansKVal.textContent = kmeansKSlider.value;
+            initKMeansCentroids();
+            render();
+        });
+
+        neuronW1Slider.addEventListener('input', () => {
+            neuronW1Val.textContent = neuronW1Slider.value;
+            render();
+        });
+        neuronW2Slider.addEventListener('input', () => {
+            neuronW2Val.textContent = neuronW2Slider.value;
+            render();
+        });
+        neuronBiasSlider.addEventListener('input', () => {
+            neuronBiasVal.textContent = neuronBiasSlider.value;
+            render();
+        });
+
+        // Action Deck Button Listeners
+        btnAction.addEventListener('click', () => {
+            if (currentAlgo === 'kmeans') {
+                stepKMeans();
+            }
+        });
+
+        btnReset.addEventListener('click', () => {
+            if (currentAlgo === 'regression') {
+                regWSlider.value = '1.0';
+                regBSlider.value = '200';
+                regWVal.textContent = '1.0';
+                regBVal.textContent = '200';
+            } else if (currentAlgo === 'kmeans') {
+                kmeansKSlider.value = '3';
+                kmeansKVal.textContent = '3';
+                initKMeansCentroids();
+            } else if (currentAlgo === 'neuron') {
+                neuronW1Slider.value = '0.5';
+                neuronW2Slider.value = '0.5';
+                neuronBiasSlider.value = '0.0';
+                neuronW1Val.textContent = '0.5';
+                neuronW2Val.textContent = '0.5';
+                neuronBiasVal.textContent = '0.0';
+            }
+            render();
+        });
+
+        // Initial setup execution
+        render();
     }
 });
