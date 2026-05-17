@@ -506,201 +506,262 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 10. SIMULATED RAG AI CHATBOT SYSTEM ---
-    const chatHistory = document.getElementById('chat-history-list');
-    const chatbotForm = document.getElementById('chatbot-form');
-    const chatInputField = document.getElementById('chat-input-field');
-    const promptButtons = document.querySelectorAll('.chat-prompt-btn');
-
-    const chatbotResponses = {
-        'stack': {
-            thoughtLogs: [
-                'Retrieving profile vector index files matching tag [Languages, Frameworks, LLMs]...',
-                'Selecting top RAG context nodes (Similarity score: 0.991)...',
-                'Orchestrating technical stack output format in responsive bullet nodes...'
-            ],
-            answer: `Aastha Ojha possesses a highly specialized and production-ready data science and machine learning engineering stack:
-            <ul>
-                <li><strong>Generative AI & LLMs:</strong> LangChain, Prompt Engineering, OpenAI API, Multi-Agent AI workflows.</li>
-                <li><strong>ML & Deep Learning:</strong> Scikit-learn, NLP, Deep Learning, Exploratory Data Analysis (EDA), Feature Engineering, Statistical Analysis.</li>
-                <li><strong>Languages:</strong> High-performance Python, structured SQL (MySQL), Java.</li>
-                <li><strong>Frameworks & Libraries:</strong> Streamlit, Flask, REST APIs, Pandas, NumPy, Matplotlib, Plotly.</li>
-                <li><strong>Databases & Analytics:</strong> MySQL, Power BI, Tableau, Excel.</li>
-                <li><strong>Version Control & Tools:</strong> Git, GitHub, Cursor, ChatGPT, Claude, Gemini.</li>
-            </ul>`
-        },
-        'hire': {
-            thoughtLogs: [
-                'Calculating executive hiring benefits vectors...',
-                'Comparing academic background metrics against deployment track records...',
-                'Formulating high-conversion recruiter alignment answers...'
-            ],
-            answer: `Aastha brings an exceptional, recruiter-focused value proposition:
-            <ol>
-                <li><strong>Outstanding Academic Standing:</strong> First-class scholar with a <strong>9.01/10 CGPA</strong> in B.Tech (ECE) at MMMUT and a <strong>9.0/10 CGPA</strong> in her Data Science minor.</li>
-                <li><strong>Hands-on Deployment Experience:</strong> She doesn't just write scripts—she deploys real, high-performance systems to Streamlit Cloud (such as IoT predictive models and multi-agent health platforms) trained on thousands of data records.</li>
-                <li><strong>Demonstrated Efficiency Gains:</strong> Her projects have concrete, business-focused outcomes, like reducing false industrial alerts by **18%** and improving recruiter screening efficiency by **60%+**.</li>
-            </ol>`
-        },
-        'academic': {
-            thoughtLogs: [
-                'Connecting to Academic & Publications Vector collections...',
-                'Scanning university records, papers, and credentials...',
-                'Extracting verified honors citations...'
-            ],
-            answer: `Aastha Ojha's academic credentials demonstrate extreme rigor and technical depth:
-            <ul>
-                <li><strong>B.Tech in Electronics and Communication Engineering:</strong> Madan Mohan Malaviya University of Technology, Gorakhpur (2023 – Present) | <strong>CGPA: 9.01/10</strong></li>
-                <li><strong>Minor Degree in Data Science:</strong> Madan Mohan Malaviya University of Technology | <strong>CGPA: 9.0/10</strong></li>
-                <li><strong>Oracle Cloud Certifications:</strong> 
-                    <ul>
-                        <li>Oracle Cloud Infrastructure 2025 Certified Data Science Professional (Oct 2025)</li>
-                        <li>Oracle Cloud Infrastructure 2025 Certified AI Foundation Associate (Oct 2025)</li>
-                    </ul>
-                </li>
-            </ul>`
-        },
-        'rag': {
-            thoughtLogs: [
-                'Retrieving LLM Safety & System Guardrail documents...',
-                'Extracting multi-agent healthcare intelligence frameworks...',
-                'Structuring defensive pipeline replies...'
-            ],
-            answer: `Aastha ensures safe, reliable Generative AI systems by applying robust multi-agent orchestration and precision parsing:
-            <ul>
-                <li><strong>Orchestrated Multi-Agent Architecture:</strong> In her HealthAI system, she coordinates <strong>4 specialized AI agents</strong> to analyze clinical symptoms and reports with specialized tasks, avoiding model confusion.</li>
-                <li><strong>Hallucination Defensive Prompts:</strong> Leverages advanced prompt engineering in LangChain combined with severity-based risk alert checks.</li>
-                <li><strong>Semantic Scoring Precision:</strong> Deploys TF-IDF features and Cosine Similarity models (as seen in TalentSynapse AI) to map semantic relationships with 85-92% accuracy, eliminating guesswork.</li>
-            </ul>`
-        },
-        'fallback': {
-            thoughtLogs: [
-                'Scanning query keywords against indexed portfolio matrices...',
-                'No exact matches found. Constructing generalized core dossier answer...',
-                'Connecting query to recruiter conversion CTAs...'
-            ],
-            answer: `I parsed your query but couldn't locate an exact document match. Here is Aastha Ojha's professional snapshot:
-            <br><br>
-            She is an active Data Science & Machine Learning Engineer with a stellar <strong>9.01/10 CGPA</strong> in ECE and <strong>9.0/10</strong> in Data Science. She has built and deployed high-performance Streamlit systems (predictive maintenance classifiers, multi-agent diagnostics, and ATS analyzers) utilizing Scikit-learn, LangChain, and OpenAI.
-            <br><br>
-            <strong>Next steps:</strong>
-            <ul>
-                <li>To view her verified code, navigate to the <strong>Live Code Terminal</strong> section.</li>
-                <li>To download her full PDF resume and portfolio dossier, click the <strong>Get Resume & Dossier</strong> button in the Contact section!</li>
-            </ul>`
-        }
-    };
-
-    function appendMessage(sender, text, isAgent = false, isSystem = false) {
-        const msgDiv = document.createElement('div');
-        if (isSystem) {
-            msgDiv.className = 'chat-msg system-msg';
-            msgDiv.innerHTML = `
-                <div class="msg-sender"><i class="fa-solid fa-shield-halved"></i> SYSTEM</div>
-                <div class="msg-content">${text}</div>
-            `;
-        } else {
-            msgDiv.className = isAgent ? 'chat-msg agent-msg' : 'chat-msg user-msg';
-            const icon = isAgent ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-user-tie"></i>';
-            msgDiv.innerHTML = `
-                <div class="msg-sender">${icon} ${sender}</div>
-                <div class="msg-content">${text}</div>
-            `;
-        }
-        chatHistory.appendChild(msgDiv);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-    }
-
-    function appendThinking(logs) {
-        const thinkingDiv = document.createElement('div');
-        thinkingDiv.className = 'chat-msg agent-msg thinking-block';
-        thinkingDiv.innerHTML = `
-            <div class="msg-sender"><i class="fa-solid fa-robot"></i> Aastha's Virtual Assistant</div>
-            <div class="msg-content agent-thinking">
-                <i class="fa-solid fa-spinner fa-spin"></i> 
-                <span>Thinking... (Retrieving Vector Context)</span>
-            </div>
-        `;
-        chatHistory.appendChild(thinkingDiv);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-
-        let logNum = 0;
-        const thinkingTextSpan = thinkingDiv.querySelector('.agent-thinking span');
+    // --- 10. INTERACTIVE DATA SCIENCE & ML SANDBOX ENGINE ---
+    const canvasSandbox = document.getElementById('sandbox-canvas');
+    if (canvasSandbox) {
+        const ctxS = canvasSandbox.getContext('2d');
+        let points = []; // Array of {x, y, label} where label: 0 (Red) or 1 (Blue)
+        let paradigm = 'regression'; // 'regression' or 'classification'
+        let activeClass = 0; // 0: Red, 1: Blue
         
-        function streamThinkingLogs() {
-            if (logNum < logs.length) {
-                thinkingTextSpan.innerHTML = `[AGENT LOG]: ${logs[logNum]}`;
-                logNum++;
-                setTimeout(streamThinkingLogs, 800);
+        const paradigmToggles = document.querySelectorAll('#paradigm-select .btn-toggle');
+        const classToggles = document.querySelectorAll('#class-select .btn-toggle');
+        const classColorSelector = document.getElementById('class-color-selector');
+        const knnKGroup = document.getElementById('knn-k-group');
+        const regressionFitGroup = document.getElementById('regression-fit-group');
+        const knnKInput = document.getElementById('knn-k');
+        const knnKValSpan = document.getElementById('knn-k-val');
+        const r2ScoreSpan = document.getElementById('r2-score');
+        const regressionEqSpan = document.getElementById('regression-eq');
+        const btnFitModel = document.getElementById('btn-fit-model');
+        const btnClearSandbox = document.getElementById('btn-clear-sandbox');
+
+        // Draw coordinate grid helper
+        function drawGrid() {
+            ctxS.clearRect(0, 0, canvasSandbox.width, canvasSandbox.height);
+            
+            // Draw background grid lines
+            ctxS.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctxS.lineWidth = 1;
+            
+            const gridSpacing = 40;
+            for (let x = 0; x < canvasSandbox.width; x += gridSpacing) {
+                ctxS.beginPath();
+                ctxS.moveTo(x, 0);
+                ctxS.lineTo(x, canvasSandbox.height);
+                ctxS.stroke();
             }
-        }
-        streamThinkingLogs();
-        return thinkingDiv;
-    }
-
-    function triggerAgentResponse(queryKey) {
-        const responseData = chatbotResponses[queryKey] || chatbotResponses['fallback'];
-        
-        // 1. Show agent thinking log stream
-        const thinkingNode = appendThinking(responseData.thoughtLogs);
-        
-        // 2. Clear thinking and output answer
-        const totalDelay = (responseData.thoughtLogs.length * 800) + 400;
-        setTimeout(() => {
-            thinkingNode.remove();
-            appendMessage("Aastha's Virtual Assistant", responseData.answer, true);
-        }, totalDelay);
-    }
-
-    // Suggestions Click Handlers
-    promptButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const query = btn.getAttribute('data-query');
-            const btnText = btn.textContent;
-            
-            appendMessage("Visitor / Recruiter", btnText, false);
-            triggerAgentResponse(query);
-        });
-    });
-
-    // Custom text input handler
-    if (chatbotForm) {
-        chatbotForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = chatInputField.value.trim();
-            if (!text) return;
-            
-            appendMessage("Visitor / Recruiter", text, false);
-            chatInputField.value = '';
-            
-            // Basic keyword router (semantic similarity approximation)
-            const lowText = text.toLowerCase();
-            let matchedKey = 'fallback';
-            
-            if (lowText.includes('stack') || lowText.includes('skill') || lowText.includes('tool') || lowText.includes('language') || lowText.includes('python')) {
-                matchedKey = 'stack';
-            } else if (lowText.includes('hire') || lowText.includes('value') || lowText.includes('why') || lowText.includes('benefit') || lowText.includes('experience')) {
-                matchedKey = 'hire';
-            } else if (lowText.includes('academic') || lowText.includes('college') || lowText.includes('paper') || lowText.includes('research') || lowText.includes('university') || lowText.includes('publication')) {
-                matchedKey = 'academic';
-            } else if (lowText.includes('rag') || lowText.includes('hallucination') || lowText.includes('vector') || lowText.includes('pinecone') || lowText.includes('qdrant') || lowText.includes('search')) {
-                matchedKey = 'rag';
+            for (let y = 0; y < canvasSandbox.height; y += gridSpacing) {
+                ctxS.beginPath();
+                ctxS.moveTo(0, y);
+                ctxS.lineTo(canvasSandbox.width, y);
+                ctxS.stroke();
             }
-            
-            triggerAgentResponse(matchedKey);
-        });
-    }
 
-    // --- 11. CONTACT FORM SECURE message pipeline submission simulator ---
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('form-name').value;
-            const email = document.getElementById('form-email').value;
+            // Draw center axes (light purple glow)
+            ctxS.strokeStyle = 'rgba(127, 0, 255, 0.15)';
+            ctxS.lineWidth = 2;
+            ctxS.beginPath();
+            ctxS.moveTo(canvasSandbox.width / 2, 0);
+            ctxS.lineTo(canvasSandbox.width / 2, canvasSandbox.height);
+            ctxS.moveTo(0, canvasSandbox.height / 2);
+            ctxS.lineTo(canvasSandbox.width, canvasSandbox.height / 2);
+            ctxS.stroke();
+        }
+
+        // Draw points on canvas
+        function drawPoints() {
+            points.forEach(pt => {
+                ctxS.beginPath();
+                ctxS.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+                if (pt.label === 0) {
+                    ctxS.fillStyle = '#ef4444'; // Class A: Red
+                    ctxS.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                } else {
+                    ctxS.fillStyle = '#06b6d4'; // Class B: Blue
+                    ctxS.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+                }
+                ctxS.lineWidth = 4;
+                ctxS.fill();
+                ctxS.stroke();
+            });
+        }
+
+        // Standard initialization
+        drawGrid();
+
+        // Canvas Click Handler: Add custom coordinates
+        canvasSandbox.addEventListener('mousedown', (e) => {
+            const rect = canvasSandbox.getBoundingClientRect();
+            // Calculate scale in case of responsive layout shrinking
+            const scaleX = canvasSandbox.width / rect.width;
+            const scaleY = canvasSandbox.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            // In regression paradigm, label is always 0. In classification, use active class toggle
+            const label = (paradigm === 'regression') ? 0 : activeClass;
+            points.push({ x, y, label });
             
-            alert(`TACTICAL CONNECTION SECURED!\n\nThank you, ${name}. Your inquiry has been encrypted and piped directly to Aastha Ojha's priority inbox.\nAn automated agent has sent a notification to her workstation.\n\nPriority response will be routed back to ${email} shortly.`);
-            contactForm.reset();
+            // Re-render canvas viewport
+            trainAndPredict(false); // Quick reactive draw
+        });
+
+        // Paradigm Toggle Handlers
+        paradigmToggles.forEach(btn => {
+            btn.addEventListener('click', () => {
+                paradigmToggles.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                paradigm = btn.getAttribute('data-paradigm');
+
+                if (paradigm === 'regression') {
+                    classColorSelector.style.display = 'none';
+                    knnKGroup.style.display = 'none';
+                    regressionFitGroup.style.display = 'block';
+                    // Reset labels to 0
+                    points.forEach(pt => pt.label = 0);
+                } else {
+                    classColorSelector.style.display = 'block';
+                    knnKGroup.style.display = 'block';
+                    regressionFitGroup.style.display = 'none';
+                }
+                trainAndPredict(true);
+            });
+        });
+
+        // Class Selection Toggle Handlers
+        classToggles.forEach(btn => {
+            btn.addEventListener('click', () => {
+                classToggles.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeClass = parseInt(btn.getAttribute('data-class'));
+            });
+        });
+
+        // Slider value dynamic update
+        knnKInput.addEventListener('input', () => {
+            knnKValSpan.textContent = knnKInput.value;
+            if (paradigm === 'classification') {
+                trainAndPredict(true);
+            }
+        });
+
+        // Fit & Train Machine Learning Model
+        function trainAndPredict(fullRedraw = true) {
+            drawGrid();
+
+            if (points.length === 0) return;
+
+            if (paradigm === 'regression') {
+                // LINEAR REGRESSION LEAST SQUARES FITTING
+                if (points.length >= 2) {
+                    let sumX = 0, sumY = 0;
+                    const n = points.length;
+
+                    points.forEach(pt => {
+                        sumX += pt.x;
+                        sumY += pt.y;
+                    });
+
+                    const meanX = sumX / n;
+                    const meanY = sumY / n;
+
+                    // Compute slope (m) and intercept (c)
+                    let num = 0;
+                    let den = 0;
+                    points.forEach(pt => {
+                        num += (pt.x - meanX) * (pt.y - meanY);
+                        den += (pt.x - meanX) * (pt.x - meanX);
+                    });
+
+                    let slope = (den === 0) ? 0 : num / den;
+                    let intercept = meanY - slope * meanX;
+
+                    // Calculate R² goodness of fit
+                    let totalSS = 0;
+                    let residualSS = 0;
+                    points.forEach(pt => {
+                        const predictedY = slope * pt.x + intercept;
+                        totalSS += Math.pow(pt.y - meanY, 2);
+                        residualSS += Math.pow(pt.y - predictedY, 2);
+                    });
+
+                    let r2 = (totalSS === 0) ? 1.0 : 1 - (residualSS / totalSS);
+                    
+                    // Convert pixels to pseudo math coordinates for clean metrics representation
+                    const pseudoSlope = (-slope).toFixed(2); // Invert y-axis to match typical math grid
+                    const pseudoIntercept = (canvasSandbox.height - intercept).toFixed(0);
+
+                    r2ScoreSpan.textContent = r2.toFixed(3);
+                    regressionEqSpan.textContent = `y = ${pseudoSlope}x + ${pseudoIntercept}`;
+
+                    // Draw the fitted line
+                    ctxS.strokeStyle = 'rgba(0, 242, 254, 0.85)';
+                    ctxS.lineWidth = 3;
+                    ctxS.shadowColor = 'rgba(0, 242, 254, 0.4)';
+                    ctxS.shadowBlur = 10;
+                    
+                    ctxS.beginPath();
+                    const x0 = 0;
+                    const y0 = intercept;
+                    const x1 = canvasSandbox.width;
+                    const y1 = slope * x1 + intercept;
+                    ctxS.moveTo(x0, y0);
+                    ctxS.lineTo(x1, y1);
+                    ctxS.stroke();
+                    
+                    // Reset shadow glow
+                    ctxS.shadowBlur = 0;
+                } else {
+                    r2ScoreSpan.textContent = '0.000';
+                    regressionEqSpan.textContent = 'Need >= 2 coordinates';
+                }
+            } else if (paradigm === 'classification' && points.length > 0) {
+                // K-NEAREST NEIGHBORS (KNN) DECISION BOUNDARY CLASSIFIER
+                const k = parseInt(knnKInput.value);
+                const step = 8; // Render boundary map in step steps to preserve client-side speed
+
+                // Loop through canvas pixels to draw background decision shaded areas
+                for (let px = 0; px < canvasSandbox.width; px += step) {
+                    for (let py = 0; py < canvasSandbox.height; py += step) {
+                        
+                        // Calculate distance to all placed coordinates
+                        const distances = [];
+                        points.forEach(pt => {
+                            const d = Math.pow(px - pt.x, 2) + Math.pow(py - pt.y, 2); // Squared distance
+                            distances.push({ d, label: pt.label });
+                        });
+
+                        // Sort by distance ascending
+                        distances.sort((a, b) => a.d - b.d);
+
+                        // Take first K neighbors
+                        const neighbors = distances.slice(0, Math.min(k, distances.length));
+                        let class0Votes = 0;
+                        let class1Votes = 0;
+                        
+                        neighbors.forEach(n => {
+                            if (n.label === 0) class0Votes++;
+                            else class1Votes++;
+                        });
+
+                        // Draw shaded background pixel block based on class votes
+                        if (class0Votes > class1Votes) {
+                            ctxS.fillStyle = 'rgba(239, 68, 68, 0.07)'; // Light red
+                        } else if (class1Votes > class0Votes) {
+                            ctxS.fillStyle = 'rgba(6, 182, 212, 0.07)'; // Light blue
+                        } else {
+                            ctxS.fillStyle = 'rgba(127, 0, 255, 0.03)'; // Neutral tie
+                        }
+                        ctxS.fillRect(px, py, step, step);
+                    }
+                }
+            }
+
+            drawPoints();
+        }
+
+        // Fit Model Button Handler
+        btnFitModel.addEventListener('click', () => {
+            trainAndPredict(true);
+        });
+
+        // Reset Sandbox Button Handler
+        btnClearSandbox.addEventListener('click', () => {
+            points = [];
+            r2ScoreSpan.textContent = '0.000';
+            regressionEqSpan.textContent = 'y = 0.00x + 0.00';
+            drawGrid();
         });
     }
 });
